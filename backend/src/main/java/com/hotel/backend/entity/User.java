@@ -6,6 +6,7 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import java.time.LocalDateTime;
+import java.util.List; // Thêm import này
 
 @Entity
 @Table(name = "users")
@@ -22,6 +23,7 @@ public class User {
     @Column(nullable = false, unique = true)
     private String email;
 
+    @JsonIgnore // BẮT BUỘC: Không bao giờ gửi mật khẩu về frontend
     @Column(nullable = false)
     private String password;
 
@@ -31,9 +33,13 @@ public class User {
     @JoinColumn(name = "role_id")
     private Role role;
 
-    // ĐỔI THÀNH Boolean (viết hoa chữ B)
     private Boolean isActive = true;
 
     @Column(updatable = false)
     private LocalDateTime createdAt = LocalDateTime.now();
+
+    // THÊM ĐOẠN NÀY: Để quản lý quan hệ và tránh lỗi vòng lặp JSON
+    @JsonIgnore
+    @OneToMany(mappedBy = "user")
+    private List<Booking> bookings;
 }

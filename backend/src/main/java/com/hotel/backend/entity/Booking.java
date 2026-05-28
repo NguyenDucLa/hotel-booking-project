@@ -20,12 +20,11 @@ public class Booking {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @JsonIgnore // Giữ lại cái này để không lộ thông tin User khi xem đơn hàng
+    // XÓA @JsonIgnore TẠI ĐÂY: Để frontend lấy được fullName của khách hàng
     @ManyToOne
     @JoinColumn(name = "user_id")
     private User user;
 
-    // XÓA @JsonIgnore TẠI ĐÂY để hiện tên khách sạn
     @ManyToOne
     @JoinColumn(name = "hotel_id")
     private Hotel hotel;
@@ -45,7 +44,6 @@ public class Booking {
     @Column(name = "status", length = 50)
     private String status = "PENDING";
 
-    // Không dùng @JsonIgnore ở đây để lấy được danh sách phòng đã đặt
     @OneToMany(mappedBy = "booking", cascade = CascadeType.ALL, fetch = FetchType.EAGER)
     private List<BookingDetail> bookingDetails;
 }

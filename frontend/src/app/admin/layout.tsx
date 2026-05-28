@@ -133,41 +133,33 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
       <Layout style={{ marginLeft: 260 }}>
         <Header style={{ 
-            background: '#fff', 
-            padding: '0 32px', 
-            display: 'flex', 
-            alignItems: 'center', 
-            justifyContent: 'space-between', 
-            boxShadow: '0 2px 8px rgba(0,0,0,0.05)',
-            height: '80px',
-            lineHeight: 'normal'
-        }}>
-            <div style={{ display: 'flex', flexDirection: 'column' }}>
-                <Title level={4} style={{ margin: 0, color: '#1a1a1a', fontWeight: 900, fontSize: '20px' }}>
-                    HỆ THỐNG QUẢN TRỊ
-                </Title>
-                <Text style={{ color: '#c5a059', fontSize: '11px', fontWeight: 'bold', letterSpacing: '1px', textTransform: 'uppercase' }}>
-                    QUẢN LÝ KHÁCH SẠN v1.0
-                </Text>
-            </div>
-            
-            <Space size="large">
-                <div style={{ textAlign: 'right' }}>
-                    <Text strong style={{ color: '#000', display: 'block', fontSize: '14px' }}>
-                        {adminData?.fullName}
-                    </Text>
-                    <Tag color="#c5a059" style={{ border: 'none', fontSize: '10px', margin: 0, fontWeight: 'bold' }}>
-                        QUẢN TRỊ VIÊN
-                    </Tag>
-                </div>
-                <Avatar 
-                    size={48} 
-                    style={{ backgroundColor: '#1a1a1a', color: '#c5a059', fontWeight: 'bold', border: '2px solid #c5a059' }}
-                >
-                    {adminData?.fullName?.charAt(0).toUpperCase()}
-                </Avatar>
-            </Space>
-        </Header>
+          background: '#fff', 
+          padding: '0 24px', 
+          display: 'flex', 
+          alignItems: 'center', 
+          justifyContent: 'space-between', 
+          boxShadow: '0 2px 8px #f0f1f2',
+          height: '70px',
+          lineHeight: 'normal',
+          whiteSpace: 'nowrap' // Ngăn không cho chữ xuống dòng khi màn hình nhỏ
+      }}>
+          <div style={{ display: 'flex', flexDirection: 'column', minWidth: '200px' }}>
+              <Title level={4} style={{ margin: 0, color: '#1a1a1a', fontWeight: 900, fontSize: '20px',whiteSpace: 'nowrap' }}>
+                  HỆ THỐNG QUẢN TRỊ
+              </Title>
+              <Text style={{ color: '#c5a059', fontSize: '10px', fontWeight: 'bold' , whiteSpace: 'nowrap'}}>
+                  QUẢN LÝ KHÁCH SẠN v1.0
+              </Text>
+          </div>
+          
+          <Space size="middle" style={{ marginLeft: 'auto' }}>
+              <div style={{ textAlign: 'right', display: 'flex', flexDirection: 'column' }}>
+                  <Text strong style={{ color: '#000', fontSize: '13px', lineHeight: 1 }}>Nguyễn Đức La</Text>
+                  <Text style={{ color: '#faad14', fontSize: '10px', fontWeight: 'bold' }}>QUẢN TRỊ VIÊN</Text>
+              </div>
+              <Avatar size={40} style={{ backgroundColor: '#1a1a1a', color: '#fadb14', border: '2px solid #fadb14' }}>D</Avatar>
+          </Space>
+      </Header>
 
         <Content style={{ 
           margin: '24px', 

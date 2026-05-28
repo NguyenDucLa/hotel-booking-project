@@ -92,4 +92,34 @@ public class HotelController {
         }
         return hotelRepository.findAll();
     }
+
+    //admin
+    // 1. Thêm khách sạn mới
+    // 1. API Thêm khách sạn mới
+    @PostMapping
+    public Hotel createHotel(@RequestBody Hotel hotel) {
+        // Đảm bảo owner_id được gán (tạm thời gán user id 1 nếu bạn chưa làm logic login admin)
+        return hotelRepository.save(hotel);
+    }
+
+    // 2. Cập nhật thông tin khách sạn
+    @PutMapping("/{id}")
+    public Hotel updateHotel(@PathVariable Long id, @RequestBody Hotel hotelDetails) {
+        Hotel hotel = hotelRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy khách sạn ID: " + id));
+        
+        hotel.setName(hotelDetails.getName());
+        hotel.setAddress(hotelDetails.getAddress());
+        hotel.setCity(hotelDetails.getCity());
+        hotel.setDescription(hotelDetails.getDescription());
+        hotel.setStarRating(hotelDetails.getStarRating());
+        
+        return hotelRepository.save(hotel);
+    }
+
+    // 3. Xóa khách sạn
+    @DeleteMapping("/{id}")
+    public void deleteHotel(@PathVariable Long id) {
+        hotelRepository.deleteById(id);
+    }
 }
