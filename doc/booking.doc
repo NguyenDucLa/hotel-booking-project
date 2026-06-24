@@ -1,0 +1,63 @@
+PHẦN 1
+BƯỚC 1: QUY HOẠCH LẠI DATABASE (LÀM SẠCH VÀ TỐI ƯU)
+Chúng ta sẽ bỏ cách nạp 225 phòng lẻ tẻ. Thay vào đó, mỗi RoomType sẽ có một cột total_rooms (ví dụ: Loại Deluxe có 50 phòng).
+Bạn hãy copy lệnh này dán vào DeepSeek:
+"Tôi đang xây dựng web đặt phòng khách sạn. Hãy giúp tôi cập nhật lại cấu trúc bảng MySQL và thực thể Java (Spring Boot) theo phong cách Traveloka:
+Cập nhật Database:
+Bảng room_types: Thêm cột total_rooms (INT) để lưu tổng số lượng phòng của loại đó. Thêm các cột: description, breakfast_included (boolean), refund_policy (text).
+Bảng rooms: Vẫn giữ để quản lý số phòng thực tế nhưng không hiển thị ra cho khách chọn nữa.
+Cập nhật Entity Java:
+Cập nhật lớp RoomType.java để khớp với các cột mới.
+Sử dụng Lombok.
+Dữ liệu mẫu (SQL):
+Viết lại script SQL xóa sạch dữ liệu cũ (SET FOREIGN_KEY_CHECKS = 0;).
+Nạp lại 25 khách sạn. Mỗi khách sạn chỉ có 2-3 loại phòng (Standard, Deluxe, Suite).
+Thiết lập total_rooms cho mỗi loại là một con số (ví dụ: 10, 20 phòng).
+Chèn dữ liệu cho bảng rooms tự động dựa trên total_rooms đó.
+Hãy viết code Entity và script SQL cho tôi."
+BƯỚC 2: LOGIC KIỂM TRA PHÒNG TRỐNG THEO SỐ LƯỢNG
+Ở phong cách Traveloka, khi khách chọn ngày, hệ thống sẽ báo: "Chỉ còn 5 phòng". Đây là logic tính toán: Tổng phòng - Số phòng đã bị đặt = Số phòng còn lại.
+Bạn dán lệnh này vào DeepSeek:
+"Hãy viết cho tôi logic kiểm tra tính khả dụng của phòng tại Backend:
+Repository: Trong BookingRepository, viết một Query để đếm xem trong khoảng ngày checkIn đến checkOut, mỗi loại phòng (room_type_id) đã được đặt bao nhiêu chiếc.
+Service: Viết hàm trong HotelService lấy chi tiết khách sạn. Khi trả về danh sách RoomType, hãy tính toán thêm một trường ảo là available_rooms cho mỗi loại phòng.
+Công thức: available_rooms = total_rooms - (số lượng đã đặt trong lịch).
+Controller: Cập nhật API GET /api/hotels/{id} để nhận thêm checkIn và checkOut. Nếu khách chưa chọn ngày, mặc định available_rooms = total_rooms."
+BƯỚC 3: GIAO DIỆN DETAIL PHONG CÁCH TRAVELOKA (FRONTEND)
+Nhìn hình bạn gửi, giao diện Traveloka có: Tên loại phòng bên trái -> Các tùy chọn chính sách ở giữa -> Giá và nút Chọn bên phải.
+Bạn dán lệnh này vào DeepSeek:
+"Hãy viết lại giao diện trang Chi tiết khách sạn (src/app/hotels/[id]/page.tsx) theo phong cách Traveloka giống như hình ảnh tôi mô tả:
+Bố cục: Hiển thị danh sách loại phòng dưới dạng bảng hoặc danh sách thẻ ngang.
+Cột 1: Hình ảnh phòng và thông tin cơ bản (diện tích, loại giường).
+Cột 2: Lựa chọn phòng (Gói dịch vụ, có ăn sáng không, miễn phí hủy phòng không).
+Cột 3: Số lượng khách (icon người).
+Cột 4: Giá mỗi đêm (Màu cam nổi bật) và tình trạng (ví dụ: 'Chỉ còn 5 phòng').
+Cột 5: Nút 'Chọn' (màu xanh hoặc vàng).
+Chức năng: Khi nhấn 'Chọn', hệ thống sẽ chuyển sang trang /booking kèm theo roomTypeId và thông tin ngày đã chọn.
+UI Library: Sử dụng Ant Design (Table hoặc List) và Tailwind CSS. Hãy làm cho nó trông thật chuyên nghiệp, thoáng đãng như Traveloka."
+
+PHẦN 2
+Bước 1: Yêu cầu DeepSeek tạo bộ dữ liệu "Đa dạng" (SQL)
+Thay vì dùng vòng lặp chèn tên giống nhau, hãy bảo DeepSeek viết một script SQL thông minh hơn.
+Câu lệnh dán vào DeepSeek:
+"Cấu trúc Database hiện tại của tôi đã có bảng room_types liên kết với hotel_id, nhưng dữ liệu đang bị lặp lại (khách sạn nào cũng có 3 loại giống nhau).
+Hãy viết lại script SQL chèn dữ liệu mẫu cho bảng room_types sao cho đa dạng như Traveloka:
+Chia 25 khách sạn thành các nhóm: Resort biển, Khách sạn phố, và Homestay.
+Với Resort (Đà Nẵng, Phú Quốc): Tạo các loại phòng như 'Ocean Front Villa', 'Premier Garden View', 'Beachfront Suite'. Giá cao từ 4-10 triệu.
+Với Khách sạn phố (Hà Nội, TP.HCM): Tạo các loại phòng như 'Superior City View', 'Executive Club Room', 'Presidential Suite'. Giá từ 1.5 - 5 triệu.
+Với Homestay/Khách sạn nhỏ (Đà Lạt): Tạo các loại phòng như 'Phòng Attic (Gác mái)', 'Bungalow Family', 'Standard Cozy'. Giá từ 500k - 1.5 triệu.
+Mô tả: Mỗi loại phòng hãy viết một đoạn mô tả ngắn về tiện ích (ví dụ: 'Có ban công hướng biển', 'Miễn phí trà chiều').
+Hãy viết script DELETE dữ liệu cũ của bảng room_types và rooms, sau đó INSERT bộ dữ liệu đa dạng này vào."
+Bước 2: Cập nhật Backend (Để linh hoạt tên loại phòng)
+Bạn cần đảm bảo code Java không được "đợi" đúng 3 cái tên đó mà phải nhận diện bất cứ tên gì từ Database trả về.
+Câu lệnh dán vào DeepSeek:
+"Hãy kiểm tra lại HotelController.java và RoomType.java. Đảm bảo rằng khi tôi lấy chi tiết một khách sạn, hệ thống sẽ trả về toàn bộ danh sách loại phòng riêng biệt của khách sạn đó mà không có bất kỳ logic nào bị fix cứng (hardcode) theo tên 'Standard' hay 'Deluxe'. Tôi muốn Frontend nhận được chính xác những gì có trong bảng room_types theo hotel_id."
+Bước 3: Cập nhật giao diện trang Chi tiết (Frontend)
+Trang chi tiết bây giờ không được chia 3 mục cố định nữa, mà phải duyệt theo danh sách trả về.
+Câu lệnh dán vào DeepSeek:
+"Sửa lại trang src/app/hotels/[id]/page.tsx (Trang chi tiết) để hiển thị danh sách phòng linh hoạt:
+Duyệt danh sách: Sử dụng hàm .map() để hiển thị tất cả loại phòng nhận được từ API khách sạn.
+Thông tin hiển thị: Với mỗi loại phòng, hiển thị: Tên phòng (ví dụ: 'Ocean Suite'), Ảnh phòng, Tiện ích riêng (Breakfast, Wifi), và chính sách hoàn tiền.
+Giá cả: Hiển thị giá tiền và số lượng phòng còn trống (available_rooms) dựa trên ngày đã chọn.
+Style: Làm giao diện dạng danh sách thẻ ngang giống Traveloka (Ảnh bên trái, nội dung ở giữa, giá và nút Chọn bên phải)."
+

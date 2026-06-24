@@ -18,6 +18,18 @@ public interface BookingRepository extends JpaRepository<Booking, Long> {
     // Tìm các đơn đặt của 1 Khách sạn
     List<Booking> findByHotelId(Long hotelId);
 
+    // Tìm các đơn đặt thuộc về khách sạn của một Owner
+    @Query("SELECT b FROM Booking b WHERE b.hotel.owner.id = :ownerId ORDER BY b.id DESC")
+    List<Booking> findByHotelOwnerId(@Param("ownerId") Long ownerId);
+
+    // Đếm số đơn đặt thuộc về khách sạn của một Owner
+    @Query("SELECT COUNT(b) FROM Booking b WHERE b.hotel.owner.id = :ownerId")
+    long countByHotelOwnerId(@Param("ownerId") Long ownerId);
+
+    // Tính tổng doanh thu (CONFIRMED hoặc PAID) của một Owner
+    @Query("SELECT COALESCE(SUM(b.totalAmount), 0) FROM Booking b WHERE b.hotel.owner.id = :ownerId AND (b.status = 'CONFIRMED' OR b.status = 'PAID')")
+    double sumRevenueByOwnerId(@Param("ownerId") Long ownerId);
+
     /**
      * Logic Tìm phòng đã bị đặt:
      * Một phòng được coi là 'Bận' nếu có bất kỳ đơn đặt nào (không phải bị Hủy)
@@ -29,4 +41,12 @@ public interface BookingRepository extends JpaRepository<Booking, Long> {
            "AND bd.booking.checkInDate < :checkOut " +
            "AND bd.booking.checkOutDate > :checkIn")
     List<Long> findOccupiedRoomIds(@Param("checkIn") LocalDate checkIn, @Param("checkOut") LocalDate checkOut);
+
+    // BƯỚC 2: Đếm số phòng đã đặt theo từng loại phòng trong khoảng ngày
+    @Query("SELECT bd.room.roomType.id, COUNT(DISTINCT bd.room.id) FROM BookingDetail bd " +
+           "WHERE bd.booking.status <> 'CANCELLED' " +
+           "AND bd.booking.checkInDate < :checkOut " +
+           "AND bd.booking.checkOutDate > :checkIn " +
+           "GROUP BY bd.room.roomType.id")
+    List<Object[]> countBookedRoomsByType(@Param("checkIn") LocalDate checkIn, @Param("checkOut") LocalDate checkOut);
 }

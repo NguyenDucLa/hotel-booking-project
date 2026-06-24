@@ -86,9 +86,8 @@ public class SecurityConfig {
                 // 4. Quan trọng: Mở khóa API check Xanh/Đỏ phòng (để khách xem được lịch trống)
                 .requestMatchers("/api/bookings/check-availability").permitAll()
                 
-                // 5. Chặn API Admin: Chỉ cho phép người có vai trò ADMIN
-                // Lưu ý: Nếu DB bạn lưu là "ADMIN", hãy dùng hasAuthority("ADMIN")
-                .requestMatchers("/api/admin/**").hasAuthority("ADMIN")
+                // 5. API Admin: Cho phép ADMIN và HOTEL_OWNER (phân quyền chi tiết trong Controller)
+                .requestMatchers("/api/admin/**").hasAnyAuthority("ADMIN", "HOTEL_OWNER")
                 
                 // 6. Các API của người dùng (Dashboard, Thông tin cá nhân)
                 .requestMatchers("/api/user/**").authenticated()

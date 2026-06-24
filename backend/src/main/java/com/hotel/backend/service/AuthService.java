@@ -54,7 +54,7 @@ public class AuthService {
 
             String token = jwtUtils.generateToken(user.getEmail());
 
-            return new AuthResponse(token, user.getEmail(), user.getFullName(), customerRole.getName());
+            return new AuthResponse(token, user.getEmail(), user.getFullName(), customerRole.getName(), user.getId());
         } catch (Exception e) {
             e.printStackTrace();
             throw new RuntimeException("Đăng ký thất bại: " + e.getMessage());
@@ -70,6 +70,6 @@ public class AuthService {
                 .orElseThrow(() -> new RuntimeException("User not found"));
         String token = jwtUtils.generateToken(user.getEmail());
 
-        return new AuthResponse(token, user.getEmail(), user.getFullName(), user.getRole().getName());
+        return new AuthResponse(token, user.getEmail(), user.getFullName(), user.getRole().getName(), user.getId());
     }
 }

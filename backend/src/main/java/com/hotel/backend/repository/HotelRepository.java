@@ -12,6 +12,7 @@ import java.util.Map;
 public interface HotelRepository extends JpaRepository<Hotel, Long> {
     List<Hotel> findByCity(String city);
     List<Hotel> findByOwnerId(Long ownerId);
+    long countByOwnerId(Long ownerId);
 
     @Query("SELECT h FROM Hotel h ORDER BY h.starRating DESC")
     List<Hotel> findTop4ByOrderByStarRatingDesc();

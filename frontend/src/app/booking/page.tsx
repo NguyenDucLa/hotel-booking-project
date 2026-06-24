@@ -3,8 +3,12 @@ import React, { useEffect, useState, Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { hotelService } from '@/services/hotelService';
 import { bookingService } from '@/services/bookingService';
-import { Card, DatePicker, Button, Typography, Divider, Spin, App, Space, Breadcrumb, Radio, Row, Col } from 'antd';
-import { CalendarOutlined, ShopOutlined, CheckCircleFilled, ArrowLeftOutlined } from '@ant-design/icons';
+import { Card, Button, Typography, Divider, Spin, App, Radio, Row, Col, Tag } from 'antd';
+import { 
+  CalendarOutlined, ShopOutlined, CheckCircleFilled, 
+  ArrowLeftOutlined, EnvironmentOutlined, UserOutlined,
+  CoffeeOutlined, InfoCircleOutlined
+} from '@ant-design/icons';
 import dayjs from 'dayjs';
 
 const { Title, Text } = Typography;
@@ -13,125 +17,280 @@ function BookingContent() {
   const { message } = App.useApp();
   const searchParams = useSearchParams();
   const router = useRouter();
+
+  // Đọc tham số từ URL
   const hotelId = searchParams.get('hotelId');
-  const roomId = searchParams.get('roomId');
+  const roomTypeId = searchParams.get('roomTypeId');
+  const checkInStr = searchParams.get('checkIn');
+  const checkOutStr = searchParams.get('checkOut');
 
   const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
-  const [dates, setDates] = useState<any>(null);
+  const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
+
+  // Parse dates from URL
+  const checkInDate = checkInStr ? dayjs(checkInStr) : null;
+  const checkOutDate = checkOutStr ? dayjs(checkOutStr) : null;
+  const nights = checkInDate && checkOutDate ? checkOutDate.diff(checkInDate, 'day') : 1;
 
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const hotelData = await hotelService.getHotelById(hotelId!);
-        // Tìm phòng cụ thể trong danh sách roomTypes
-        let foundRoom: any = null;
-        hotelData.roomTypes.forEach((type: any) => {
-          const r = type.rooms.find((rm: any) => rm.id.toString() === roomId);
-          if (r) foundRoom = { ...r, typeName: type.name, basePrice: type.basePrice };
-        });
-        setData({ hotel: hotelData, room: foundRoom });
-      } catch (e) {
-        message.error("Lỗi tải thông tin phòng");
+        setLoading(true);
+        setError(null);
+
+        if (!hotelId || !roomTypeId) {
+          setError("Thiếu thông tin đặt phòng. Vui lòng quay lại chọn phòng.");
+          return;
+        }
+
+        // Gọi API với checkIn/checkOut để lấy available_rooms
+        const res = await hotelService.getHotelById(
+          hotelId, 
+          checkInStr || '', 
+          checkOutStr || ''
+        );
+
+        // Tìm loại phòng trong danh sách roomTypes
+        const foundRoomType = res.roomTypes?.find(
+          (rt: any) => rt.id.toString() === roomTypeId
+        );
+
+        if (!foundRoomType) {
+          setError("Không tìm thấy loại phòng này.");
+          return;
+        }
+
+        if (foundRoomType.availableRooms <= 0) {
+          setError("Rất tiếc, loại phòng này đã hết chỗ trong khoảng ngày bạn chọn.");
+          return;
+        }
+
+        setData({ hotel: res.hotel, roomType: foundRoomType });
+      } catch (e: any) {
+        console.error("Lỗi tải thông tin:", e);
+        setError("Lỗi tải thông tin đặt phòng. Vui lòng thử lại.");
       } finally {
         setLoading(false);
       }
     };
-    if (hotelId && roomId) fetchData();
-  }, [hotelId, roomId]);
+
+    fetchData();
+  }, [hotelId, roomTypeId, checkInStr, checkOutStr]);
 
   const handleConfirm = async () => {
-    if (!dates) return message.warning("Vui lòng chọn ngày nhận/trả phòng");
     setSubmitting(true);
     try {
       const payload = {
         hotelId: parseInt(hotelId!),
-        roomId: parseInt(roomId!),
-        checkInDate: dates[0].format('YYYY-MM-DD'),
-        checkOutDate: dates[1].format('YYYY-MM-DD'),
+        roomTypeId: parseInt(roomTypeId!),
+        checkInDate: checkInStr,
+        checkOutDate: checkOutStr,
         paymentMethod: 'CASH'
       };
       const res = await bookingService.createBooking(payload);
-      message.success(res.message);
+      message.success(res.message || "Đặt phòng thành công!");
       router.push('/');
-    } catch (e) {
-      message.error("Đặt phòng thất bại, vui lòng thử lại");
+    } catch (e: any) {
+      const errMsg = e?.response?.data || "Đặt phòng thất bại, vui lòng thử lại";
+      message.error(typeof errMsg === 'string' ? errMsg : "Đặt phòng thất bại");
     } finally {
       setSubmitting(false);
     }
   };
 
-  if (loading) return <div className="h-screen flex items-center justify-center bg-[#f9f7f2]"><Spin size="large" /></div>;
+  // LOADING
+  if (loading) return (
+    <div className="h-screen flex items-center justify-center bg-[#f9f7f2]">
+      <Spin size="large" description="Đang tải thông tin đặt phòng..." />
+    </div>
+  );
 
-  const nights = dates ? dates[1].diff(dates[0], 'day') : 1;
-  const total = (data?.room?.basePrice || 0) * (nights || 1);
+  // ERROR
+  if (error) return (
+    <div className="min-h-screen bg-[#f9f7f2] flex items-center justify-center px-4">
+      <div className="bg-white p-10 rounded-3xl shadow-sm border border-gray-100 text-center max-w-lg">
+        <div className="text-5xl mb-6">😕</div>
+        <Title level={4} className="!text-gray-800 !mb-3">{error}</Title>
+        <Button 
+          type="primary"
+          onClick={() => router.back()}
+          className="!bg-[#f97316] !border-none !rounded-xl !h-11 !px-8 !font-bold mt-4"
+        >
+          Quay lại
+        </Button>
+      </div>
+    </div>
+  );
+
+  if (!data) return null;
+
+  const { hotel, roomType } = data;
+  const total = roomType.basePrice * (nights || 1);
 
   return (
-    <div className="min-h-screen bg-[#f9f7f2] py-12 px-4">
+    <div className="min-h-screen bg-[#f9f7f2] py-8 px-4">
       <div className="container mx-auto max-w-4xl">
-        <Title level={2} className="text-center mb-12 uppercase tracking-widest" style={{ fontFamily: 'serif' }}>Xác Nhận Đặt Phòng</Title>
-        
-        <Row gutter={[32, 32]}>
-          <Col xs={24} md={14}>
-            <Card variant="borderless" className="rounded-2xl shadow-sm mb-6">
-              <Title level={4} className="mb-6"><CalendarOutlined className="text-[#c5a059]" /> Thời gian lưu trú</Title>
-              <DatePicker.RangePicker 
-                className="w-full h-12 rounded-xl"
-                disabledDate={(current) => current && current < dayjs().startOf('day')}
-                onChange={(val) => setDates(val)}
-              />
-              <p className="mt-4 text-gray-400 text-xs italic">* Vui lòng kiểm tra kỹ ngày nhận và trả phòng.</p>
-            </Card>
+        {/* NÚT QUAY LẠI */}
+        <Button 
+          type="text" 
+          icon={<ArrowLeftOutlined />} 
+          onClick={() => router.back()}
+          className="hover:text-[#f97316] font-bold text-xs uppercase tracking-widest mb-6 flex items-center"
+        >
+          Quay lại
+        </Button>
 
-            <Card variant="borderless" className="rounded-2xl shadow-sm">
-              <Title level={4} className="mb-6">💳 Phương thức thanh toán</Title>
-              <Radio.Group value="CASH" className="w-full">
-                <div className="p-4 border-2 border-[#c5a059] bg-[#f9f7f2] rounded-xl flex items-center justify-between">
-                  <Radio value="CASH"><Text strong>Thanh toán bằng tiền mặt</Text></Radio>
-                  <Text className="text-gray-400 text-xs">Tại khách sạn</Text>
+        <Title level={2} className="!text-2xl !font-bold !text-gray-900 mb-8 text-center">
+          Xác nhận đặt phòng
+        </Title>
+
+        <Row gutter={[24, 24]}>
+          {/* LEFT: FORM */}
+          <Col xs={24} md={14}>
+            {/* THÔNG TIN ĐẶT */}
+            <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 mb-4">
+              <Title level={5} className="!text-sm !font-bold !mb-5 !text-gray-700">
+                <CalendarOutlined className="mr-2 text-[#f97316]" /> Thời gian lưu trú
+              </Title>
+              <div className="bg-orange-50 rounded-xl p-4 border border-orange-100">
+                <div className="flex items-center justify-between">
+                  <div className="text-center">
+                    <Text className="text-[10px] uppercase tracking-widest text-gray-400 font-bold">Nhận phòng</Text>
+                    <Text className="text-base font-bold text-gray-800 block mt-1">
+                      {checkInDate?.format('DD/MM/YYYY')}
+                    </Text>
+                  </div>
+                  <div className="text-center">
+                    <Text className="text-[10px] uppercase tracking-widest text-gray-400 font-bold">Số đêm</Text>
+                    <Text className="text-lg font-black text-[#f97316] block mt-1">{nights}</Text>
+                  </div>
+                  <div className="text-center">
+                    <Text className="text-[10px] uppercase tracking-widest text-gray-400 font-bold">Trả phòng</Text>
+                    <Text className="text-base font-bold text-gray-800 block mt-1">
+                      {checkOutDate?.format('DD/MM/YYYY')}
+                    </Text>
+                  </div>
                 </div>
-              </Radio.Group>
-            </Card>
+              </div>
+            </div>
+
+            {/* PHƯƠNG THỨC THANH TOÁN */}
+            <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
+              <Title level={5} className="!text-sm !font-bold !mb-5 !text-gray-700">💳 Phương thức thanh toán</Title>
+              <div className="p-4 border-2 border-[#f97316] bg-orange-50 rounded-xl flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="w-5 h-5 rounded-full bg-[#f97316] flex items-center justify-center">
+                    <div className="w-2 h-2 rounded-full bg-white"></div>
+                  </div>
+                  <div>
+                    <Text strong className="text-gray-800">Thanh toán bằng tiền mặt</Text>
+                    <Text className="text-xs text-gray-400 block">Thanh toán tại khách sạn khi nhận phòng</Text>
+                  </div>
+                </div>
+                <Tag color="orange" className="!rounded-full !text-[10px]">Miễn phí</Tag>
+              </div>
+            </div>
           </Col>
 
+          {/* RIGHT: TÓM TẮT */}
           <Col xs={24} md={10}>
-            <Card variant="borderless" className="rounded-2xl shadow-xl bg-[#1a1a1a] text-white">
-              <Title level={4} className="!text-white mb-1">{data?.hotel?.name}</Title>
-              <Text className="text-gray-400 text-xs block mb-6"><ShopOutlined /> {data?.hotel?.address}</Text>
-              
-              <div className="space-y-4">
-                <div className="flex justify-between">
-                  <Text className="text-gray-400">Loại phòng</Text>
-                  <Text className="text-white font-bold">{data?.room?.typeName}</Text>
+            <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden sticky top-28">
+              {/* HOTEL INFO */}
+              <div className="p-5 border-b border-gray-100">
+                <Title level={5} className="!text-sm !font-bold !mb-1 !text-gray-800">{hotel.name}</Title>
+                <Text className="text-xs text-gray-400 flex items-center gap-1">
+                  <EnvironmentOutlined /> {hotel.address}
+                </Text>
+              </div>
+
+              {/* ROOM TYPE INFO */}
+              <div className="p-5 space-y-4">
+                <div className="flex gap-4">
+                  <img 
+                    src={
+                      ['https://images.unsplash.com/photo-1631049307264-da0ec9d70304?q=80&w=120',
+                       'https://images.unsplash.com/photo-1590490360182-c33d57733427?q=80&w=120',
+                       'https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?q=80&w=120',
+                       'https://images.unsplash.com/photo-1566665797739-1674de7a421a?q=80&w=120',
+                       'https://images.unsplash.com/photo-1611892440504-42a792e24d32?q=80&w=120'
+                      ][(roomType.id || 0) % 5]
+                    }
+                    className="w-20 h-16 rounded-xl object-cover flex-shrink-0"
+                    alt={roomType.name}
+                  />
+                  <div>
+                    <Text strong className="text-gray-800 block">{roomType.name}</Text>
+                    <div className="flex items-center gap-1 mt-1">
+                      <UserOutlined className="text-gray-400 text-[10px]" />
+                      <Text className="text-[11px] text-gray-400">Tối đa {roomType.capacity} khách</Text>
+                    </div>
+                    <div className="flex items-center gap-1 mt-0.5">
+                      <CoffeeOutlined className="text-gray-400 text-[10px]" />
+                      <Text className="text-[11px] text-gray-400">
+                        {roomType.breakfastIncluded ? 'Có ăn sáng' : 'Không ăn sáng'}
+                      </Text>
+                    </div>
+                  </div>
                 </div>
-                <div className="flex justify-between">
-                  <Text className="text-gray-400">Số phòng</Text>
-                  <Text className="text-[#c5a059] font-bold">{data?.room?.roomNumber}</Text>
+
+                <Divider className="!my-0" />
+
+                {/* CHI TIẾT GIÁ */}
+                <div className="space-y-3">
+                  <div className="flex justify-between items-center">
+                    <Text className="text-gray-500 text-sm">{roomType.name}</Text>
+                    <Text className="text-gray-800 font-medium">
+                      {new Intl.NumberFormat('vi-VN').format(roomType.basePrice)}₫
+                    </Text>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <Text className="text-gray-500 text-sm">Số đêm</Text>
+                    <Text className="text-gray-800 font-medium">{nights} đêm</Text>
+                  </div>
+                  <div className="flex justify-between items-start">
+                    <Text className="text-gray-500 text-sm flex items-center gap-1">
+                      <InfoCircleOutlined className="text-gray-300" /> 
+                      Chính sách hủy
+                    </Text>
+                    <Text className="text-xs text-gray-400 text-right max-w-[140px] leading-tight">
+                      {roomType.refundPolicy || 'Linh hoạt'}
+                    </Text>
+                  </div>
                 </div>
-                <div className="flex justify-between">
-                  <Text className="text-gray-400">Thời gian</Text>
-                  <Text className="text-white">{nights} đêm</Text>
-                </div>
-                <Divider className="bg-gray-800" />
+
+                <Divider className="!my-0" />
+
+                {/* TỔNG TIỀN */}
                 <div className="flex justify-between items-center">
-                  <Text className="text-lg">Tổng cộng</Text>
-                  <Text className="text-2xl font-black text-[#c5a059]">
-                    {new Intl.NumberFormat('vi-VN').format(total)}đ
-                  </Text>
+                  <Text className="text-base font-bold text-gray-800">Tổng cộng</Text>
+                  <div className="text-right">
+                    <Text className="text-xl font-black text-[#f97316]">
+                      {new Intl.NumberFormat('vi-VN').format(total)}₫
+                    </Text>
+                    <Text className="text-[10px] text-gray-400 block">Đã gồm thuế & phí</Text>
+                  </div>
                 </div>
+
+                {/* NÚT XÁC NHẬN */}
                 <Button 
                   type="primary" 
                   block 
                   size="large"
                   loading={submitting}
                   onClick={handleConfirm}
-                  className="!bg-[#c5a059] !text-black border-none h-14 rounded-xl font-bold mt-6 hover:scale-105 transition-all"
+                  className="!bg-gradient-to-r !from-[#f97316] !to-[#ea580c] !border-none !h-12 !rounded-xl !font-bold !text-sm !shadow-lg !shadow-orange-200 hover:!shadow-xl hover:!translate-y-[-1px] !transition-all"
                 >
-                  XÁC NHẬN ĐẶT PHÒNG
+                  {submitting ? 'Đang xử lý...' : 'XÁC NHẬN ĐẶT PHÒNG'}
                 </Button>
+
+                <div className="flex items-center justify-center gap-2 text-[11px] text-gray-400">
+                  <CheckCircleFilled className="text-green-500" />
+                  <span>Bạn sẽ thanh toán tại khách sạn</span>
+                </div>
               </div>
-            </Card>
+            </div>
           </Col>
         </Row>
       </div>

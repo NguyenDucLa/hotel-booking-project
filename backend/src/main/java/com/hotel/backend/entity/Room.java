@@ -1,6 +1,6 @@
 package com.hotel.backend.entity;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -21,6 +21,6 @@ public class Room {
 
     @ManyToOne
     @JoinColumn(name = "room_type_id")
-    @JsonIgnore // CHỈ GIỮ LẠI 1 DÒNG NÀY, XÓA DÒNG DƯỚI ĐI
+    @JsonIgnoreProperties({"rooms", "description", "basePrice", "capacity", "breakfastIncluded", "refundPolicy", "totalRooms"})
     private RoomType roomType;
 }

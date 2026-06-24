@@ -10,7 +10,7 @@ import java.time.LocalDate;
 @AllArgsConstructor
 public class BookingRequest {
     private Long hotelId;
-    private Long roomId; 
+    private Long roomTypeId; // Traveloka-style: đặt theo loại phòng
     private LocalDate checkInDate;
     private LocalDate checkOutDate;
     private String paymentMethod;

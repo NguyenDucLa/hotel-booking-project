@@ -34,16 +34,15 @@ export default function Header() {
   };
 
   const menuItems: MenuProps['items'] = [
-    {
+    ...((user?.role === 'ADMIN' || user?.role === 'HOTEL_OWNER') ? [{
       key: 'admin',
       label: (
         <div className="bg-[#1a1a1a] text-[#c5a059] font-bold p-2 rounded-t-md flex items-center gap-2 uppercase text-[10px] tracking-widest">
           <DashboardOutlined /> Trang Quản Trị
         </div>
       ),
-      disabled: user?.role !== 'ADMIN',
       onClick: () => router.push('/admin')
-    },
+    }] : []),
     { 
       key: 'profile', 
       icon: <UserOutlined />, 

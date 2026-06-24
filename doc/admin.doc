@@ -1,0 +1,38 @@
+1. Phân chia logic quyền hạn (Logic Definition)
+Chức năng	ADMIN (Quản trị hệ thống)	HOTEL_OWNER (Chủ khách sạn)
+Dashboard	Xem tổng doanh thu toàn sàn, tổng số User, tổng số KS.	Chỉ xem doanh thu của các KS mình sở hữu.
+Quản lý KS	Xem, khóa hoặc xóa tất cả khách sạn.	Thêm mới KS, sửa thông tin KS của mình.
+Loại phòng	Xem được tất cả.	Toàn quyền Thêm/Sửa/Xóa loại phòng cho KS của mình.
+Đơn hàng	Xem toàn bộ đơn hàng trên hệ thống.	Chỉ xem và xác nhận đơn hàng của khách đặt vào KS của mình.
+Người dùng	Quản lý danh sách User, cấp quyền Owner.	Không có quyền xem danh sách người dùng hệ thống.
+2. Bước 1: Backend - Phân quyền và Lọc dữ liệu theo Owner
+Đây là bước quan trọng nhất. Mỗi khi lấy danh sách Khách sạn hoặc Đơn hàng, Backend phải kiểm tra: "Nếu là Owner, chỉ lấy dữ liệu có owner_id bằng ID của người đang đăng nhập".
+Câu lệnh dán vào DeepSeek:
+"Tôi cần nâng cấp tính năng Admin để phân rõ 2 vai trò: ADMIN và HOTEL_OWNER. Hãy thực hiện các thay đổi sau ở Backend:
+HotelRepository & BookingRepository: Thêm các hàm tìm kiếm theo ownerId. Ví dụ: findByOwnerId(Long ownerId) và findAllByHotelOwnerId(Long ownerId).
+AdminController / HotelController:
+Khi lấy danh sách Khách sạn:
+Nếu người dùng có quyền ADMIN: Trả về tất cả khách sạn.
+Nếu người dùng có quyền HOTEL_OWNER: Chỉ trả về khách sạn có owner_id khớp với ID của người đó.
+Khi lấy danh sách Đơn hàng:
+Admin thấy tất cả.
+Owner chỉ thấy các đơn hàng thuộc về khách sạn của họ.
+Bảo mật: Sử dụng @PreAuthorize trên các hàm Controller để chặn: HOTEL_OWNER không được phép gọi API xóa người dùng hoặc xem thống kê tổng của ADMIN.
+Login: Khi trả về Token, hãy đảm bảo đính kèm thêm role và userId để Frontend dễ xử lý.
+Hãy viết lại code các Controller và Service liên quan cho tôi."
+3. Bước 2: Frontend - Giao diện Sidebar và Dashboard linh hoạt
+Frontend cần dựa vào role để ẩn/hiện menu phù hợp.
+Câu lệnh dán vào DeepSeek:
+"Hãy cập nhật Layout trang Admin (src/app/admin/layout.tsx) và Dashboard (src/app/admin/page.tsx) để phù hợp với 2 vai trò:
+Sidebar:
+Nếu là ADMIN: Hiện đủ: Tổng quan, Quản lý khách sạn, Quản lý đơn hàng, Người dùng.
+Nếu là HOTEL_OWNER: Chỉ hiện: Tổng quan, Khách sạn của tôi, Đơn hàng của tôi.
+Dashboard Stats:
+Admin thấy tổng số liệu toàn sàn.
+Owner thấy số liệu (Doanh thu, số khách) chỉ của riêng họ.
+Route Guard: Nếu một HOTEL_OWNER cố tình truy cập thủ công vào đường dẫn /admin/users, hãy hiện trang 403 Forbidden hoặc đá về dashboard của họ.
+Hãy viết lại file layout.tsx và page.tsx trong thư mục admin cho tôi."
+4. Bước 3: Logic "Thêm Khách Sạn" cho Owner
+Khi Owner thêm khách sạn, hệ thống phải tự động gắn owner_id là ID của họ.
+Câu lệnh dán vào DeepSeek:
+"Hãy sửa lại API POST /api/hotels ở Backend. Khi một người có quyền HOTEL_OWNER tạo khách sạn mới, hãy lấy ID của người đó từ Principal (Token) và tự động gán vào cột owner_id của khách sạn đó trước khi lưu vào Database. Đảm bảo tính năng này hoạt động đúng chuẩn bảo mật."
